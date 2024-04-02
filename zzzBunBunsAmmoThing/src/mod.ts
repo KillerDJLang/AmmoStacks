@@ -1,21 +1,22 @@
 import { DependencyContainer }      from "tsyringe";
 import { IPostDBLoadMod }           from "@spt-aki/models/external/IPostDBLoadMod";
 import { ILogger }                  from "@spt-aki/models/spt/utils/ILogger";
+import { LogTextColor }             from "@spt-aki/models/spt/logging/LogTextColor";
 import { DatabaseServer }           from "@spt-aki/servers/DatabaseServer";
 import { VFS }                      from "@spt-aki/utils/VFS";
+import { WriteAmmoLists }           from "./writeAmmoLists";
+import { BaseClasses }              from "./Enums";
+
+import * as modConfig               from "../config/config.json";
 import * as path                    from "path";
 
-import * as modConfig               from "../config/config.json"
-
-const modName = "BunBunsAmmoThing";
-
-class BunBunsAmmoThing implements IPostDBLoadMod
+class AmmoStackModifier implements IPostDBLoadMod
 {
-    mod:        string;
-    logger:     ILogger
+    logger:     ILogger;
+    logstring:  string;
 
     constructor() {
-        this.mod = "zzzBunBunsAmmoThing";
+        this.logstring = "BunBuns Ammo Modifier";
     }
 
     /**
@@ -28,13 +29,16 @@ class BunBunsAmmoThing implements IPostDBLoadMod
         const database =    container.resolve<DatabaseServer>("DatabaseServer").getTables();
         const items =       database.templates.items;
         const vfs =         container.resolve<VFS>("VFS");
+        const ammoGen =     new WriteAmmoLists();
         const Shotgun =     JSON.parse(vfs.readFile(path.resolve(__dirname, "../config/AmmoList/Shotgun.json")));
         const Flares =      JSON.parse(vfs.readFile(path.resolve(__dirname, "../config/AmmoList/UBGL.json")));
         const Sniper =      JSON.parse(vfs.readFile(path.resolve(__dirname, "../config/AmmoList/Sniper.json")));
         const SMG =         JSON.parse(vfs.readFile(path.resolve(__dirname, "../config/AmmoList/SMG.json")));
         const Rifle =       JSON.parse(vfs.readFile(path.resolve(__dirname, "../config/AmmoList/Rifle.json")));
 
-        logger.log ("Unfucking your ammo stacks LOL", "magenta")
+        logger.log (`[${this.logstring}] Unfucking your ammo stacks LOL`, LogTextColor.MAGENTA)
+
+        ammoGen.generateAmmoTypeData(database, BaseClasses, vfs);
 
         for (const ID of Shotgun)
         {
@@ -63,4 +67,4 @@ class BunBunsAmmoThing implements IPostDBLoadMod
     }
 }
 
-module.exports = { mod: new BunBunsAmmoThing() };
+module.exports = { mod: new AmmoStackModifier() };
